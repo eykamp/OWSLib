@@ -26,6 +26,20 @@ from owslib.util import log
 def ns(tag):
     return '{http://www.opengis.net/wcs/1.1}'+tag
 
+
+def find_ows(obj, key):
+    if obj is None:
+        return None
+        
+    val = obj.find('{http://www.opengis.net/ows}' + key)
+
+    if val is not None:
+        return val
+
+    # If we didn't find what we were looking for, try the namespace that ESRI uses
+    return obj.find('{http://www.opengis.net/wcs/1.1/ows}' + key)
+
+
 class WebCoverageService_1_1_0(WCSBase):
     """Abstraction for OGC Web Coverage Service (WCS), version 1.1.0
     Implements IWebCoverageService.
@@ -212,17 +226,19 @@ class ServiceIdentification(object):
     def __init__(self,elem):        
         self.service="WCS"
         self.version="1.1.0"
-        self.title=testXMLValue(elem.find('{http://www.opengis.net/ows}Title'))
-        if self.title is None:  #may have used the wcs ows namespace:
-            self.title=testXMLValue(elem.find('{http://www.opengis.net/wcs/1.1/ows}Title'))
+        self.title = testXMLValue(find_ows(elem, 'Title'))
+        # self.title=testXMLValue(elem.find('{http://www.opengis.net/ows}Title'))
+        # if self.title is None:  #may have used the wcs ows namespace:
+        #     self.title=testXMLValue(elem.find('{http://www.opengis.net/wcs/1.1/ows}Title'))
         
-        self.abstract=testXMLValue(elem.find('{http://www.opengis.net/ows}Abstract'))
-        if self.abstract is None:#may have used the wcs ows namespace:
-            self.abstract=testXMLValue(elem.find('{http://www.opengis.net/wcs/1.1/ows}Abstract'))
-        if elem.find('{http://www.opengis.net/ows}Abstract') is not None:
-            self.abstract=elem.find('{http://www.opengis.net/ows}Abstract').text
-        else:
-            self.abstract = None
+        self.abstract = testXMLValue(find_ows(elem, 'Abstract'))
+        # self.abstract=testXMLValue(elem.find('{http://www.opengis.net/ows}Abstract'))
+        # if self.abstract is None:#may have used the wcs ows namespace:
+        #     self.abstract=testXMLValue(elem.find('{http://www.opengis.net/wcs/1.1/ows}Abstract'))
+        # if elem.find('{http://www.opengis.net/ows}Abstract') is not None:
+        #     self.abstract=elem.find('{http://www.opengis.net/ows}Abstract').text
+        # else:
+        #     self.abstract = None
         self.keywords = [f.text for f in elem.findall('{http://www.opengis.net/ows}Keywords/{http://www.opengis.net/ows}Keyword')]
         #self.link = elem.find('{http://www.opengis.net/wcs/1.1}Service/{http://www.opengis.net/wcs/1.1}OnlineResource').attrib.get('{http://www.w3.org/1999/xlink}href', '')
                
@@ -231,7 +247,7 @@ class ServiceIdentification(object):
         else:
             self.fees=None
         
-        if  elem.find('{http://www.opengis.net/wcs/1.1/ows}AccessConstraints') is not None:
+        if elem.find('{http://www.opengis.net/wcs/1.1/ows}AccessConstraints') is not None:
             self.accessConstraints=elem.find('{http://www.opengis.net/wcs/1.1/ows}AccessConstraints').text
         else:
             self.accessConstraints=None
